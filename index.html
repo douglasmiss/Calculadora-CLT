@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Calculadora de salário líquido CLT com detalhamento de INSS, IRRF e FGTS.">
+  <meta name="theme-color" content="#101318">
+  <title>Calculadora CLT | Salário Líquido</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg:#101318; --surface:#191e26; --surface-2:#202733; --text:#edf1f7;
+      --muted:#9ba7b7; --line:#303a48; --primary:#7c9cff; --primary-hover:#9bb2ff;
+      --green:#5bd49a; --red:#ff8585; --amber:#f2c879;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);min-height:100vh}
+    .container{width:min(920px,calc(100% - 32px));margin:42px auto 56px}
+    header{margin-bottom:24px}
+    .eyebrow{color:var(--primary);font-size:.78rem;font-weight:750;letter-spacing:.12em;text-transform:uppercase;margin:0 0 9px}
+    h1{font-size:clamp(1.65rem,4vw,2.25rem);letter-spacing:-.045em;margin:0 0 8px}
+    header p,.muted{color:var(--muted);margin:0;line-height:1.55}
+    .layout{display:grid;grid-template-columns:minmax(260px,.85fr) minmax(0,1.15fr);gap:18px;align-items:start}
+    .panel,.hero{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px}
+    h2{font-size:1.05rem;margin:0 0 18px}
+    .field{margin-bottom:16px}
+    label{display:block;font-size:.86rem;font-weight:650;margin-bottom:7px}
+    input{width:100%;background:#11161d;border:1px solid var(--line);border-radius:10px;padding:12px 13px;color:var(--text);font:inherit;outline:none}
+    input:focus{border-color:var(--primary);box-shadow:0 0 0 3px #7c9cff22}
+    input::placeholder{color:#697587}
+    .hint{font-size:.77rem;color:var(--muted);margin:6px 0 0;line-height:1.45}
+    button{width:100%;border:0;border-radius:10px;padding:12px 15px;background:var(--primary);color:#101827;font:inherit;font-weight:750;cursor:pointer;margin-top:2px}
+    button:hover{background:var(--primary-hover)}
+    .hero{margin-bottom:16px;background:linear-gradient(145deg,#202a3a,#191e26 65%)}
+    .hero-label{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+    .net{font-size:clamp(2rem,5vw,2.7rem);font-weight:800;letter-spacing:-.05em;color:var(--green);overflow-wrap:anywhere}
+    .hero-sub{font-size:.82rem;color:var(--muted);margin-top:8px}
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+    .stat{background:#11182099;border:1px solid #354151;border-radius:11px;padding:12px}
+    .stat span{display:block;color:var(--muted);font-size:.78rem;margin-bottom:6px}
+    .stat strong{font-size:1.05rem;overflow-wrap:anywhere}
+    .deductions{margin-top:16px}
+    .line-item{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+    .line-item:last-child{border-bottom:0}
+    .item-name{font-weight:650;font-size:.9rem}
+    .item-detail{font-size:.76rem;color:var(--muted);margin-top:4px;line-height:1.4}
+    .item-value{text-align:right;white-space:nowrap;font-weight:700;font-size:.9rem}
+    .negative{color:var(--red)} .positive{color:var(--green)}
+    .total{margin-top:8px;padding:15px;background:#2a2025;border:1px solid #59333b;border-radius:11px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .total span{font-weight:700}.total strong{color:var(--red);font-size:1.1rem}
+    .fgts{margin-top:14px;padding:14px;background:#17271f;border:1px solid #2b5740;border-radius:11px}
+    .fgts .line-item{padding:0;border:0}
+    .fgts .item-value{color:var(--green)}
+    .note{font-size:.77rem;color:var(--muted);line-height:1.55;margin:14px 0 0}
+    .footer{font-size:.76rem;color:var(--muted);text-align:center;margin-top:22px;line-height:1.6}
+    @media(max-width:720px){.container{margin:26px auto 40px}.layout{grid-template-columns:1fr}.panel,.hero{padding:18px}}
+    @media(prefers-reduced-motion:no-preference){button{transition:background .15s ease}}
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <p class="eyebrow">Simulador de folha de pagamento</p>
+      <h1>Calculadora de salário CLT</h1>
+      <p>Informe seu salário bruto e veja quanto poderá receber após os principais descontos legais.</p>
+    </header>
+
+    <section class="layout" aria-label="Calculadora de salário">
+      <form class="panel" id="salaryForm">
+        <h2>Dados do salário</h2>
+        <div class="field">
+          <label for="grossSalary">Salário bruto mensal (R$)</label>
+          <input id="grossSalary" name="grossSalary" type="number" min="0" step="0.01" value="3500" placeholder="Ex.: 3500,00" required>
+        </div>
+        <div class="field">
+          <label for="dependents">Dependentes para IRRF</label>
+          <input id="dependents" name="dependents" type="number" min="0" max="30" step="1" value="0" required>
+          <p class="hint">Dedução mensal por dependente: R$ 189,59.</p>
+        </div>
+        <div class="field">
+          <label for="otherDeductions">Outros descontos mensais (R$)</label>
+          <input id="otherDeductions" name="otherDeductions" type="number" min="0" step="0.01" value="0" placeholder="Ex.: plano de saúde ou adiantamento">
+          <p class="hint">Informe aqui descontos específicos do seu holerite. Eles não alteram o cálculo legal do IRRF.</p>
+        </div>
+        <button type="submit">Calcular salário líquido</button>
+      </form>
+
+      <section aria-live="polite" aria-atomic="true">
+        <div class="hero">
+          <div class="hero-label">Salário líquido estimado</div>
+          <div class="net" id="netSalary">R$ 0,00</div>
+          <div class="hero-sub">Valor estimado após os descontos informados</div>
+          <div class="stats">
+            <div class="stat"><span>Salário bruto</span><strong id="grossResult">R$ 0,00</strong></div>
+            <div class="stat"><span>Total de descontos</span><strong class="negative" id="totalDeductions">R$ 0,00</strong></div>
+          </div>
+        </div>
+
+        <div class="panel deductions">
+          <h2>Detalhamento dos valores</h2>
+          <div class="line-item">
+            <div><div class="item-name">INSS</div><div class="item-detail" id="inssRate">Contribuição previdenciária progressiva</div></div>
+            <div class="item-value negative" id="inssValue">− R$ 0,00</div>
+          </div>
+          <div class="line-item">
+            <div><div class="item-name">IRRF</div><div class="item-detail" id="irrfRate">Imposto de Renda Retido na Fonte</div></div>
+            <div class="item-value negative" id="irrfValue">− R$ 0,00</div>
+          </div>
+          <div class="line-item">
+            <div><div class="item-name">Outros descontos informados</div><div class="item-detail">Valores adicionais inseridos por você</div></div>
+            <div class="item-value negative" id="otherValue">− R$ 0,00</div>
+          </div>
+          <div class="total"><span>Total descontado</span><strong id="deductionsTotalBottom">R$ 0,00</strong></div>
+          <div class="fgts">
+            <div class="line-item">
+              <div><div class="item-name">FGTS (8%)</div><div class="item-detail">Depósito estimado feito pelo empregador. Não é descontado do seu salário.</div></div>
+              <div class="item-value" id="fgtsValue">R$ 0,00</div>
+            </div>
+          </div>
+          <p class="note" id="calculationNote">Cálculo estimado com as tabelas de 2026. O resultado pode variar conforme adicionais, faltas, benefícios, pensão alimentícia e regras específicas da folha.</p>
+        </div>
+      </section>
+    </section>
+    <p class="footer">Referências: tabelas oficiais de INSS e IRRF vigentes em 2026. Esta ferramenta é uma simulação e não substitui o demonstrativo oficial de pagamento.</p>
+  </main>
+
+  <script>
+    const money = value => new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(value);
+    const number = value => Number.isFinite(value) ? value : 0;
+    const round = value => Math.round((value + Number.EPSILON) * 100) / 100;
+
+    // INSS progressivo para empregado CLT - competência 2026.
+    function calculateINSS(salary) {
+      const brackets = [
+        {limit:1621.00, rate:0.075},
+        {limit:2902.84, rate:0.09},
+        {limit:4354.27, rate:0.12},
+        {limit:8475.55, rate:0.14}
+      ];
+      let previous = 0, contribution = 0;
+      for (const bracket of brackets) {
+        const taxable = Math.max(0, Math.min(salary, bracket.limit) - previous);
+        contribution += taxable * bracket.rate;
+        previous = bracket.limit;
+        if (salary <= bracket.limit) break;
+      }
+      return round(contribution);
+    }
+
+    // Tabela mensal do IRRF 2026, com desconto simplificado quando mais vantajoso.
+    function calculateIRRF(gross, inss, dependents) {
+      const dependentDeduction = dependents * 189.59;
+      const simplifiedDeduction = 607.20;
+      const legalDeductions = inss + dependentDeduction;
+      const chosenDeduction = Math.max(legalDeductions, simplifiedDeduction);
+      const base = Math.max(0, gross - chosenDeduction);
+      const brackets = [
+        {limit:2428.80, rate:0, deduction:0},
+        {limit:2826.65, rate:0.075, deduction:182.16},
+        {limit:3751.05, rate:0.15, deduction:394.16},
+        {limit:4664.68, rate:0.225, deduction:675.49},
+        {limit:Infinity, rate:0.275, deduction:908.73}
+      ];
+      const bracket = brackets.find(item => base <= item.limit);
+      const taxBeforeReduction = Math.max(0, base * bracket.rate - bracket.deduction);
+      let reduction = 0;
+      if (gross <= 5000) reduction = 312.89;
+      else if (gross <= 7350) reduction = 978.62 - (0.133145 * gross);
+      const tax = Math.max(0, taxBeforeReduction - Math.max(0, reduction));
+      return {tax:round(tax), base:round(base), rate:bracket.rate, deduction:chosenDeduction, simplified: simplifiedDeduction > legalDeductions};
+    }
+
+    function updateCalculation() {
+      const gross = Math.max(0, number(Number(document.getElementById('grossSalary').value)));
+      const dependents = Math.min(30, Math.max(0, Math.floor(number(Number(document.getElementById('dependents').value)))));
+      const other = Math.max(0, number(Number(document.getElementById('otherDeductions').value)));
+      const inss = calculateINSS(gross);
+      const irrf = calculateIRRF(gross, inss, dependents);
+      const total = round(inss + irrf.tax + other);
+      const net = round(gross - total);
+      const fgts = round(gross * 0.08);
+      const percent = gross > 0 ? (inss / gross * 100) : 0;
+
+      document.getElementById('netSalary').textContent = money(net);
+      document.getElementById('grossResult').textContent = money(gross);
+      document.getElementById('totalDeductions').textContent = money(total);
+      document.getElementById('deductionsTotalBottom').textContent = money(total);
+      document.getElementById('inssValue').textContent = '− ' + money(inss);
+      document.getElementById('irrfValue').textContent = '− ' + money(irrf.tax);
+      document.getElementById('otherValue').textContent = '− ' + money(other);
+      document.getElementById('fgtsValue').textContent = money(fgts);
+      document.getElementById('inssRate').textContent = `Alíquota efetiva aproximada: ${percent.toFixed(2).replace('.', ',')}% do salário bruto`;
+      document.getElementById('irrfRate').textContent = irrf.tax === 0
+        ? `Sem retenção estimada • Base de cálculo: ${money(irrf.base)}`
+        : `Faixa marginal: ${(irrf.rate * 100).toLocaleString('pt-BR')}% • Base: ${money(irrf.base)}`;
+      document.getElementById('calculationNote').textContent = `IRRF calculado usando ${irrf.simplified ? 'o desconto simplificado mensal de R$ 607,20' : 'as deduções legais informadas (INSS e dependentes)'} como dedução mais vantajosa. Tabelas de 2026.`;
+    }
+
+    const form = document.getElementById('salaryForm');
+    form.addEventListener('submit', event => { event.preventDefault(); updateCalculation(); });
+    ['grossSalary','dependents','otherDeductions'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updateCalculation);
+    });
+    updateCalculation();
+  </script>
+</body>
+</html>

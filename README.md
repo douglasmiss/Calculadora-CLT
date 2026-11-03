@@ -1,6 +1,6 @@
 # Calculadora de Salário CLT
 
-Aplicação web simples para estimar o salário líquido de um trabalhador CLT no Brasil, com interface em modo escuro.
+Aplicação web simples para estimar o salário líquido de um trabalhador CLT no Brasil.
 
 Não é necessário instalar dependências ou configurar um servidor
 
